@@ -12,13 +12,18 @@ func main() {
 
 	http.HandleFunc("/", Login)
 	http.HandleFunc("/Sign-up", Signup)
+	http.HandleFunc("/registred", Registred)
+	http.HandleFunc("/check", Check)
+	http.HandleFunc("/dashboard", Dashboard)
 
 	http.ListenAndServe(":8080", nil)
 
 }
 
 type User struct {
-	Name string
+	Id       string
+	Email    string
+	Password string
 }
 
 var t = template.Must(template.ParseGlob("static/*"))
@@ -44,9 +49,7 @@ func ConnexionBD() (conexion *sql.DB) {
 
 func Login(w http.ResponseWriter, r *http.Request) {
 
-	name := User{Name: "Franchesco"}
-
-	t.ExecuteTemplate(w, "login", name)
+	t.ExecuteTemplate(w, "login", nil)
 
 }
 
@@ -54,12 +57,71 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 	t.ExecuteTemplate(w, "Sign-up", nil)
 
-	insertConexion, err := conexionEstablish.Prepare("INSERT INTO Users(email,password) VALUES('correo@gmail.com','holamundo')")
+}
 
-	if err != nil {
-		panic(err)
+func Registred(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == "POST" {
+
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+
+		insertConexion, err := conexionEstablish.Prepare("INSERT INTO Users(email,password) VALUES(?,?)")
+
+		if err != nil {
+			panic(err)
+		}
+
+		insertConexion.Exec(email, password)
+
+		http.Redirect(w, r, "/", 301)
+	}
+}
+
+func Check(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == "POST" {
+
+		record, err := conexionEstablish.Query("SELECT *FROM Users")
+
+		user := User{}
+		arrayuser := []User{}
+
+		for record.Next() {
+			var id int
+			var email string
+			var password string
+			err = record.Scan(&id, &email, &password)
+			if err != nil {
+				panic(err.Error())
+			}
+
+			user.Email = email
+			user.Password = password
+
+			arrayuser = append(arrayuser, user)
+		}
+
+		VAemail := r.FormValue("mail")
+		VApassword := r.FormValue("ps")
+
+		if VAemail == user.Email {
+
+			if VApassword == user.Password {
+
+				http.Redirect(w, r, "/dashboard", 301)
+			}
+
+		}
+
 	}
 
-	insertConexion.Exec()
+}
+
+func Dashboard(w http.ResponseWriter, r *http.Request) {
+
+	//data := User{}
+
+	t.ExecuteTemplate(w, "dashboard", nil)
 
 }
