@@ -15,6 +15,8 @@ func main() {
 	http.HandleFunc("/registred", Registred)
 	http.HandleFunc("/check", Check)
 	http.HandleFunc("/dashboard", Dashboard)
+	http.HandleFunc("/errml", Errml)
+	http.HandleFunc("/errps", Errps)
 
 	http.ListenAndServe(":8080", nil)
 
@@ -83,6 +85,11 @@ func Check(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 
 		record, err := conexionEstablish.Query("SELECT *FROM Users")
+		if err != nil {
+
+			panic(err.Error())
+
+		}
 
 		user := User{}
 		arrayuser := []User{}
@@ -110,8 +117,13 @@ func Check(w http.ResponseWriter, r *http.Request) {
 			if VApassword == user.Password {
 
 				http.Redirect(w, r, "/dashboard", 301)
+			} else {
+
+				http.Redirect(w, r, "/errps", 301)
 			}
 
+		} else {
+			http.Redirect(w, r, "/errml", 301)
 		}
 
 	}
@@ -120,8 +132,17 @@ func Check(w http.ResponseWriter, r *http.Request) {
 
 func Dashboard(w http.ResponseWriter, r *http.Request) {
 
-	//data := User{}
-
 	t.ExecuteTemplate(w, "dashboard", nil)
 
+}
+
+func Errml(w http.ResponseWriter, r *http.Request) {
+
+	t.ExecuteTemplate(w, "Loginerrml", nil)
+
+}
+
+func Errps(w http.ResponseWriter, r *http.Request) {
+
+	t.ExecuteTemplate(w, "Loginerrps", nil)
 }
